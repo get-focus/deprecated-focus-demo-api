@@ -21,5 +21,11 @@
   "bugs": {
     "url": "https://github.com/get-focus/focus-demo-api/issues"
   },
-  "homepage": "https://github.com/get-focus/focus-demo-api#readme"
+  "homepage": "https://github.com/get-focus/focus-demo-api#readme",
+  "devDependencies": {
+    "eslint": "^2.1.0",
+    "eslint-config-focus": "^0.3.0",
+    "eslint-plugin-filenames": "^0.2.0",
+    "eslint-plugin-react": "^3.16.1"
+  }
 }
