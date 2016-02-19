@@ -1,0 +1,25 @@
+{
+  "name": "focus-demo-api",
+  "version": "0.0.1",
+  "description": "Focus Demo Node API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/get-focus/focus-demo-api.git"
+  },
+  "keywords": [
+    "node",
+    "api",
+    "focus",
+    "demo"
+  ],
+  "author": "focus@kleegroup.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/get-focus/focus-demo-api/issues"
+  },
+  "homepage": "https://github.com/get-focus/focus-demo-api#readme"
+}
