@@ -32,6 +32,7 @@
     "babel-eslint": "^5.0.0",
     "bluebird": "^3.3.1",
     "distribute-array": "0.0.3",
+    "express": "^4.13.4",
     "search-index": "^0.7.2",
     "sequelize": "^3.19.3",
     "sqlite3": "^3.1.1",

@@ -120,24 +120,28 @@ const populateDatabase = (Movie, Person, MoviePerson, batchSize) => getRawPerson
 .then(movies => batchify(movies, batchSize))
 .then(batches => sequencify(batches, batch => insertMovieBatch(batch, Movie).then(() => insertMoviePersonBatch(batch, MoviePerson))));
 
-const init = () => {
-    return initDatabase(sequelize)
-    .then(() => Promise.resolve(checkIsDatabaseEmpty(Movie)))
-    .then(empty => {
-        if (empty) {
-            return populateDatabase(Movie, Person, MoviePerson, BATCH_SIZE);
-        } else {
-            return Promise.resolve();
-        }
-    });
-}
+// Stateful functions
+
+const get = sequelize.sync()
+.then(() => ({
+    sequelize,
+    Movie,
+    Person,
+    MoviePerson
+}))
+
+const populate = () => populateDatabase(Movie, Person, MoviePerson, BATCH_SIZE);
+
+const isEmpty = () => checkIsDatabaseEmpty(Movie);
 
 // Exports
 
 module.exports = {
-    sequelize,
-    init,
+    get: get,
+    populate,
+    isEmpty,
     Movie,
     Person,
-    MoviePerson
+    MoviePerson,
+    sequelize
 }

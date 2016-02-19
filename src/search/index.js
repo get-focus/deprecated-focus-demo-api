@@ -9,7 +9,7 @@ const da = require('distribute-array'); // Used to make indexation batches
 
 const Movie = require('../database').Movie;
 const sequelize = require('../database').sequelize;
-const prepareDb = require('../database').init;
+const getDb = require('../database').get;
 
 // Configuration
 
@@ -94,27 +94,52 @@ const indexBatch = (si, batch, batchOptions, batchIndex, totalBatches) => {
     return si.add(batch, batchOptions);
 }
 
-const fillIndex = (si, batchOptions, batchSize, Movie) => prepareDb()
+const fillIndex = (si, batchOptions, batchSize, Movie) => getDb
 .then(() => getMovies(Movie))
 .then(movies => batchify(movies, batchSize))
 .then(batches => sequencify(batches, (batch, batchIndex) => indexBatch(si, batch, batchOptions, batchIndex, batches.length)))
 .then(() => si)
 
-const getAndFillIndex = (searchIndex, indexOptions, batchOptions, batchSize, Movie) => initSearchIndex(searchIndex, indexOptions)
-.then(promisifySearchIndex)
-.then(si => {
-    return checkIsIndexEmpty(si)
-    .then(empty => {
-        if (empty) {
-            return fillIndex(si, batchOptions, batchSize, Movie);
-        } else {
-            return si;
+const search = (si, text) => {
+    const query = {
+        query: {'*': [text]},
+        facets: {
+            title: {},
+            movieType: {},
+            productionYear: {}
         }
-    });
-});
+    }
+    return si.search(query)
+    .then(results => {
+        const facets = results.facets.reduce((acc, facet) => {
+            acc[facet.key] = facet.value.reduce((facetAcc, facetValue) => {
+                facetAcc[facetValue.key] = facetValue.value;
+                return facetAcc;
+            }, {})
+            return acc;
+        }, {});
+        const totalCount = results.totalHits;
+        const list = results.hits.map(hit => hit.document);
+        return {
+            facets,
+            totalCount,
+            list
+        };
+    })
+}
 
-// Functions
+// Stateful functions
 
-getAndFillIndex(searchIndex, indexOptions, batchOptions, BATCH_SIZE, Movie)
-.then(si => si.search({query: {'*': ['john']}, facets: {movieType: {}}}))
-.then(results => console.log(results.facets[0].value))
+const get = initSearchIndex(searchIndex, indexOptions)
+.then(promisifySearchIndex)
+
+const populate = si => fillIndex(si, batchOptions, BATCH_SIZE, Movie)
+
+// Exports
+
+module.exports = {
+    get: get,
+    populate,
+    isEmpty: checkIsIndexEmpty,
+    search
+};
