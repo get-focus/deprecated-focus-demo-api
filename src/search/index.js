@@ -104,9 +104,31 @@ const search = (si, text) => {
     const query = {
         query: {'*': [text]},
         facets: {
-            title: {},
+            title: {
+                ranges: [
+                    ['', 'A'],
+                    ['A', 'G'],
+                    ['H', 'N'],
+                    ['O', 'T'],
+                    ['U', 'Z'],
+                    ['Z', '']
+                ]
+            },
             movieType: {},
-            productionYear: {}
+            productionYear: {
+                ranges: [
+                    ['', '1930'],
+                    ['1931', '1940'],
+                    ['1941', '1950'],
+                    ['1951', '1960'],
+                    ['1961', '1970'],
+                    ['1971', '1980'],
+                    ['1981', '1990'],
+                    ['1991', '2000'],
+                    ['2001', '2010'],
+                    ['2011', '']
+                ]
+            }
         }
     }
     return si.search(query)
