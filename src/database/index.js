@@ -12,7 +12,7 @@ const BATCH_SIZE = 1000;
 
 const sequelize = new Sequelize('focus-demo-app', '', '', {
     dialect: 'sqlite',
-    storage: './api/database/db.sqlite',
+    storage: './src/database/db.sqlite',
     logging: false
 });
 

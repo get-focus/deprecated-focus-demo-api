@@ -14,7 +14,7 @@ const prepareDb = require('../database').init;
 // Configuration
 
 const indexOptions = {
-    indexPath: 'api/search/search-index',
+    indexPath: 'src/search/search-index',
     fieldsToStore: [
         'code',
         'title',
