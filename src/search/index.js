@@ -1,3 +1,5 @@
+"use strict";
+
 // Libraries imports
 
 const Promise = require('bluebird');
@@ -7,14 +9,19 @@ const da = require('distribute-array'); // Used to make indexation batches
 
 // Local imports
 
-const Movie = require('../database').Movie;
-const sequelize = require('../database').sequelize;
-const getDb = require('../database').get;
+const initDatabase = require('../database').init;
+const getAllMovies = require('../database').getAllMovies;
+const getAllPersons = require('../database').getAllPersons;
+
+// Local references
+
+let movieSearchIndex;
+let personSearchIndex;
 
 // Configuration
 
-const indexOptions = {
-    indexPath: 'src/search/search-index',
+const movieIndexOptions = {
+    indexPath: 'storage/search-movies',
     fieldsToStore: [
         'code',
         'title',
@@ -33,7 +40,24 @@ const indexOptions = {
     stopwords
 };
 
-const batchOptions = {
+const personIndexOptions = {
+    indexPath: 'storage/search-persons',
+    fieldsToStore: [
+        'code',
+        'fullName',
+        'biography',
+        'sex',
+        'photoURL',
+        'birthDate',
+        'birthPlace',
+        'activity',
+        'movies'
+    ],
+    deletable: false,
+    stopwords
+};
+
+const movieBatchOptions = {
     fieldOptions: [
         {
             fieldName: 'code',
@@ -54,6 +78,27 @@ const batchOptions = {
     ]
 };
 
+const personBatchOptions = {
+    fieldOptions: [
+        {
+            fieldName: 'code',
+            searchable: false
+        },
+        {
+            fieldName: 'activity',
+            filter: true
+        },
+        {
+            fieldName: 'fullName',
+            filter: true
+        },
+        {
+            fieldName: 'sex',
+            filter: true
+        }
+    ]
+}
+
 const BATCH_SIZE = 50;
 
 // Pure functions
@@ -68,8 +113,7 @@ const promisifySearchIndex = si => ['add', 'close', 'get', 'del', 'flush', 'matc
 const checkIsIndexEmpty = si => si.tellMeAboutMySearchIndex()
 .then(infos => infos.totalDocs === 0);
 
-const getMovies = Movie => Movie.findAll()
-.then(movies => movies.map(movie => movie.get({plain: true})))
+const getMovies = () => getAllMovies()
 .then(movies => movies.map(movie => ({
     code: movie.code,
     title: [movie.title],
@@ -85,6 +129,19 @@ const getMovies = Movie => Movie.findAll()
     pressRating: movie.pressRating
 })));
 
+const getPersons = () => getAllPersons()
+.then(persons => persons.map(person => ({
+    code: person.code,
+    fullName: [person.fullName],
+    biography: person.biography,
+    sex: [person.sex],
+    photoUrl: person.photoUrl,
+    birthDate: person.birthDate,
+    birthPlace: person.birthPlace,
+    activity: person.activity.split(', '),
+    movies: person.movies
+})));
+
 const batchify = (array, batchSize) => da(array, Math.ceil(array.length / batchSize));
 
 const sequencify = (batches, func) => Promise.each(batches, func);
@@ -94,13 +151,54 @@ const indexBatch = (si, batch, batchOptions, batchIndex, totalBatches) => {
     return si.add(batch, batchOptions);
 }
 
-const fillIndex = (si, batchOptions, batchSize, Movie) => getDb
-.then(() => getMovies(Movie))
+const fillMovieIndex = (si, batchOptions, batchSize) => initDatabase
+.then(() => getMovies())
 .then(movies => batchify(movies, batchSize))
 .then(batches => sequencify(batches, (batch, batchIndex) => indexBatch(si, batch, batchOptions, batchIndex, batches.length)))
-.then(() => si)
 
-const search = (si, text) => {
+const fillPersonIndex = (si, batchOptions, batchSize) => initDatabase
+.then(() => getPersons())
+.then(persons => batchify(persons, batchSize))
+.then(batches => sequencify(batches, (batch, batchIndex) => indexBatch(si, batch, batchOptions, batchIndex, batches.length)))
+
+const treatSearchResults = results => {
+    const facets = results.facets.reduce((acc, facet) => {
+        acc[facet.key] = facet.value.reduce((facetAcc, facetValue) => {
+            facetAcc[facetValue.key] = facetValue.value;
+            return facetAcc;
+        }, {})
+        return acc;
+    }, {});
+    const totalCount = results.totalHits;
+    const list = results.hits.map(hit => hit.document);
+    return {
+        facets,
+        totalCount,
+        list
+    };
+}
+
+// Stateful functions
+
+const init = Promise.mapSeries([movieIndexOptions, personIndexOptions], indexOptions => initSearchIndex(searchIndex, indexOptions)
+.then(promisifySearchIndex))
+.then(searchIndexes => {
+    movieSearchIndex = searchIndexes[0];
+    personSearchIndex = searchIndexes[1];
+    return Promise.resolve();
+});
+
+const checkIsMovieIndexEmpty = () => init.then(() => checkIsIndexEmpty(movieSearchIndex));
+
+const checkIsPersonIndexEmpty = () => init.then(() => checkIsIndexEmpty(personSearchIndex));
+
+const populateMovieIndex = () => init
+.then(() => fillMovieIndex(movieSearchIndex, movieBatchOptions, BATCH_SIZE))
+
+const populatePersonIndex = () => init
+.then(() => fillPersonIndex(personSearchIndex, personBatchOptions, BATCH_SIZE))
+
+const searchMovieIndex = text => init.then(() => {
     const query = {
         query: {'*': [text]},
         facets: {
@@ -131,37 +229,30 @@ const search = (si, text) => {
             }
         }
     }
-    return si.search(query)
-    .then(results => {
-        const facets = results.facets.reduce((acc, facet) => {
-            acc[facet.key] = facet.value.reduce((facetAcc, facetValue) => {
-                facetAcc[facetValue.key] = facetValue.value;
-                return facetAcc;
-            }, {})
-            return acc;
-        }, {});
-        const totalCount = results.totalHits;
-        const list = results.hits.map(hit => hit.document);
-        return {
-            facets,
-            totalCount,
-            list
-        };
-    })
-}
+    return movieSearchIndex.search(query)
+    .then(treatSearchResults)
+});
 
-// Stateful functions
-
-const get = initSearchIndex(searchIndex, indexOptions)
-.then(promisifySearchIndex)
-
-const populate = si => fillIndex(si, batchOptions, BATCH_SIZE, Movie)
+const searchPersonIndex = text => init.then(() => {
+    const query = {
+        query: {'*': [text]}
+    }
+    return personSearchIndex.search(query)
+    .then(treatSearchResults)
+});
 
 // Exports
 
 module.exports = {
-    get: get,
-    populate,
-    isEmpty: checkIsIndexEmpty,
-    search
+    movies: {
+        populate: populateMovieIndex,
+        isEmpty: checkIsMovieIndexEmpty,
+        search: searchMovieIndex
+    },
+    persons: {
+        populate: populatePersonIndex,
+        isEmpty: checkIsPersonIndexEmpty,
+        search: searchPersonIndex
+    },
+    init
 };
