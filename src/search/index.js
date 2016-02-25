@@ -6,6 +6,7 @@ const Promise = require('bluebird');
 const searchIndex = Promise.promisify(require('search-index')); // Promisify search-index
 const stopwords = require('term-vector').getStopwords('fr').sort(); // Get the french stopwords
 const da = require('distribute-array'); // Used to make indexation batches
+const _ = require('lodash');
 
 // Local imports
 
@@ -162,13 +163,13 @@ const fillPersonIndex = (si, batchOptions, batchSize) => initDatabase
 .then(batches => sequencify(batches, (batch, batchIndex) => indexBatch(si, batch, batchOptions, batchIndex, batches.length)))
 
 const treatSearchResults = results => {
-    const facets = results.facets.reduce((acc, facet) => {
+    const facets = !_.isEmpty(results.facets) ? results.facets.reduce((acc, facet) => {
         acc[facet.key] = facet.value.reduce((facetAcc, facetValue) => {
             facetAcc[facetValue.key] = facetValue.value;
             return facetAcc;
         }, {})
         return acc;
-    }, {});
+    }, {}) : {};
     const totalCount = results.totalHits;
     const list = results.hits.map(hit => hit.document);
     return {
@@ -204,12 +205,11 @@ const searchMovieIndex = text => init.then(() => {
         facets: {
             title: {
                 ranges: [
-                    ['', 'A'],
+                    ['', '9'],
                     ['A', 'G'],
                     ['H', 'N'],
                     ['O', 'T'],
-                    ['U', 'Z'],
-                    ['Z', '']
+                    ['U', 'Z']
                 ]
             },
             movieType: {},
@@ -224,21 +224,34 @@ const searchMovieIndex = text => init.then(() => {
                     ['1981', '1990'],
                     ['1991', '2000'],
                     ['2001', '2010'],
-                    ['2011', '']
+                    ['2011', Number.MAX_SAFE_INTEGER.toString()]
                 ]
             }
         }
     }
     return movieSearchIndex.search(query)
-    .then(treatSearchResults)
+    .then(treatSearchResults);
 });
 
 const searchPersonIndex = text => init.then(() => {
     const query = {
-        query: {'*': [text]}
+        query: {'*': [text]},
+        facets: {
+            activity: {},
+            fullName: {
+                ranges: [
+                    ['', '9'],
+                    ['A', 'G'],
+                    ['H', 'N'],
+                    ['O', 'T'],
+                    ['U', 'Z']
+                ]
+            },
+            sex: {}
+        }
     }
     return personSearchIndex.search(query)
-    .then(treatSearchResults)
+    .then(treatSearchResults);
 });
 
 // Exports
