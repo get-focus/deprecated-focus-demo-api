@@ -1,147 +1,113 @@
 // Libraries imports
 
-const Sequelize = require('sequelize');
+
+const levelup = require('levelup');
 const da = require('distribute-array');
 const Promise = require('bluebird');
+const _ = require('lodash');
 
 // Configuration
 
 const BATCH_SIZE = 1000;
-
-// Items definitions
-
-const sequelize = new Sequelize('focus-demo-app', '', '', {
-    dialect: 'sqlite',
-    storage: './src/database/db.sqlite',
-    logging: false
-});
-
-const Movie = sequelize.define('movie', {
-    code: {
-        type: Sequelize.INTEGER,
-        primaryKey: true
-    },
-    keywords: Sequelize.STRING,
-    movieType: Sequelize.STRING,
-    originalTitle: Sequelize.STRING,
-    poster: Sequelize.STRING,
-    pressRating: Sequelize.INTEGER,
-    productionYear: Sequelize.INTEGER,
-    runtime: Sequelize.INTEGER,
-    shortSynopsis: Sequelize.TEXT,
-    synopsis: Sequelize.TEXT,
-    title: Sequelize.STRING,
-    trailerHRef: Sequelize.STRING,
-    trailerName: Sequelize.STRING,
-    userRating: Sequelize.INTEGER
-});
-
-const Person = sequelize.define('person', {
-    code: {
-        type: Sequelize.INTEGER,
-        primaryKey: true
-    },
-    fullName: Sequelize.STRING,
-    firstName: Sequelize.STRING,
-    biography: Sequelize.TEXT,
-    shortBiography: Sequelize.TEXT,
-    sex: Sequelize.STRING,
-    photoURL: Sequelize.STRING,
-    birthDate: Sequelize.DATE,
-    birthPlace: Sequelize.STRING,
-    activity: Sequelize.STRING
-});
-
-const MoviePerson = sequelize.define('moviePerson', {
-    id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
-    },
-    movieCode: {
-        type: Sequelize.STRING
-    },
-    personCode: {
-        type: Sequelize.STRING
-    },
-    name: Sequelize.STRING,
-    type: {
-        type: Sequelize.STRING,
-        allowNull: false
-    },
-    role: Sequelize.STRING,
-    leadActor: Sequelize.BOOLEAN
-});
-
-Movie.belongsToMany(Person, {through: {model: 'moviePerson', unique: false}, foreignKey: 'movieCode', otherKey: 'personCode', constraints: false});
+const db = levelup('./storage/database');
 
 // Pure functions
-
-const initDatabase = sequelize => sequelize.sync();
-
-const countMovies = Movie => Movie.count();
-
-const checkIsDatabaseEmpty = Movie => countMovies(Movie)
-.then(count => count === 0);
 
 const getRawMovies = () => Promise.resolve(require('../db-movies.json'));
 
 const getRawPersons = () => Promise.resolve(require('../db-persons.json'));
 
-const batchify = (array, batchSize) => Promise.resolve(da(array, Math.ceil(array.length / batchSize)));
+const buildMovieKey = id => `MOVIE-${id}`;
 
-const sequencify = (batches, func) => Promise.each(batches, func);
+const buildPersonKey = id => `PERSON-${id}`;
 
-const insertMoviePersonBatch = (batch, MoviePerson) => {
-    const roles = ['actor', 'director', 'producer', 'writer'];
-    return MoviePerson.bulkCreate(roles.reduce((roleAcc, role) => {
-        return roleAcc.concat(batch.reduce((movieAcc, movie) => {
-            if (!movie[`${role}s`]) return movieAcc;
-            return movieAcc.concat(movie[`${role}s`].map(person => ({
-                movieCode: movie.code,
-                personCode: person.code,
-                name: person.name,
-                type: role,
-                role: person.role,
-                leadActor: person.leadActor
-            })));
-        }, []));
-    }, []));
-}
+const isMovieKey = key => key.slice(0, 5) === 'MOVIE';
 
-const insertMovieBatch = (batch, Movie) => Movie.bulkCreate(batch);
+const isPersonKey = key => key.slice(0, 6) === 'PERSON';
 
-const insertPersonBatch = (batch, Person) => Person.bulkCreate(batch);
+const buildMovieInsertionBatch = movies => movies.map(movie => ({
+    type: 'put',
+    key: buildMovieKey(movie.code),
+    value: JSON.stringify(movie)
+}));
 
-const populateDatabase = (Movie, Person, MoviePerson, batchSize) => getRawPersons()
-.then(persons => batchify(persons, batchSize))
-.then(batches => sequencify(batches, batch => insertPersonBatch(batch, Person)))
-.then(() => getRawMovies())
-.then(movies => batchify(movies, batchSize))
-.then(batches => sequencify(batches, batch => insertMovieBatch(batch, Movie).then(() => insertMoviePersonBatch(batch, MoviePerson))));
+const buildPersonInsertionBatch = persons => persons.map(person => ({
+    type: 'put',
+    key: buildPersonKey(person.code),
+    value: JSON.stringify(person)
+}));
+
+const insertIntoDatabase = (batch, database) => new Promise((resolve, reject) => database.batch(batch, error => {
+    if (error) reject(error);
+    resolve();
+}));
 
 // Stateful functions
 
-const get = sequelize.sync()
-.then(() => ({
-    sequelize,
-    Movie,
-    Person,
-    MoviePerson
-}))
+const init = Promise.all([
+    getRawMovies()
+    .then(buildMovieInsertionBatch)
+    .then(batch => insertIntoDatabase(batch, db)),
+    getRawPersons()
+    .then(buildPersonInsertionBatch)
+    .then(batch => insertIntoDatabase(batch, db))
+]);
 
-const populate = () => populateDatabase(Movie, Person, MoviePerson, BATCH_SIZE);
+const getMovie = id => new Promise((resolve, reject) => {
+    db.get(buildMovieKey(id), (error, value) => {
+        if (error) reject(error);
+        const movie = JSON.parse(value);
+        Promise.reduce(['actors', 'producers', 'directors', 'camera', 'writers'], (acc, role) => {
+            if (movie[role]) {
+                return Promise.mapSeries(movie[role], person => getPerson(person.code)
+                .then(completePerson => _.assign(person, completePerson)))
+                .then(completeRole => _.assign(acc, {[role]: completeRole}))
+            } else {
+                return acc;
+            }
+        }, movie)
+        .then(result => resolve(result));
+    });
+});
 
-const isEmpty = () => checkIsDatabaseEmpty(Movie);
+const getPerson = id => new Promise((resolve, reject) => {
+    db.get(buildPersonKey(id), (error, value) => {
+        if (error && error.notFound) {
+            resolve();
+        } else if(error) {
+            reject(error);
+        } else {
+            resolve(JSON.parse(value));
+        }
+    });
+});
+
+const getAllMovies = () => new Promise((resolve, reject) => {
+    const movies = [];
+    db.createReadStream()
+    .on('data', data => {
+        if (isMovieKey(data.key)) movies.push(JSON.parse(data.value))
+    })
+    .on('end', () => resolve(movies))
+    .on('error', error => reject(error));
+});
+
+const getAllPersons = () => new Promise((resolve, reject) => {
+    const persons = [];
+    db.createReadStream()
+    .on('data', data => {
+        if (isPersonKey(data.key)) persons.push(JSON.parse(data.value))
+    })
+    .on('end', () => resolve(persons))
+    .on('error', error => reject(error));
+});
 
 // Exports
 
 module.exports = {
-    get: get,
-    populate,
-    isEmpty,
-    Movie,
-    Person,
-    MoviePerson,
-    sequelize
+    init,
+    getMovie,
+    getPerson,
+    getAllMovies,
+    getAllPersons
 }
