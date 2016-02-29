@@ -21,12 +21,12 @@ app.use(bodyParser.json());
 app.get('/movies/:id', movieController.getMovie);
 app.get('/movies/search-index/is-empty', movieController.isSearchIndexEmpty);
 app.post('/movies/search-index/populate', movieController.populateSearchIndex);
-app.post('/movies/search/:query', movieController.search);
+app.post('/movies/search', movieController.search);
 
 app.get('/people/:id', personController.getPerson);
 app.get('/people/search-index/is-empty', personController.isSearchIndexEmpty);
 app.post('/people/search-index/populate', personController.populateSearchIndex);
-app.post('/movies/search/:query', personController.search);
+app.post('/movies/search', personController.search);
 
 app.post('/common/search', commonController.search);
 

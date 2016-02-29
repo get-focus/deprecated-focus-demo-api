@@ -24,8 +24,13 @@ const populateSearchIndex = (req, res) => {
 }
 
 const search = (req, res) => {
-    const queryText = req.params.query;
-    searchIndex.persons.search(queryText)
+    const criteria = req.body.criteria;
+    const sortFieldName = req.query.sortFieldName;
+    const sortDesc = req.query.sortDesc;
+    const skip = req.query.skip;
+    const facets = req.body.facets;
+    const group = req.body.group;
+    searchIndex.persons.search(criteria, facets, group, sortFieldName, sortDesc, skip)
     .then(results => res.json(results))
     .catch(error => res.status(500).json(error));
 }
