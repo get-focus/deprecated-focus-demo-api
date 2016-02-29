@@ -32,6 +32,7 @@
   "dependencies": {
     "babel-eslint": "^5.0.0",
     "bluebird": "^3.3.1",
+    "body-parser": "^1.15.0",
     "distribute-array": "0.0.3",
     "express": "^4.13.4",
     "leveldown": "^1.4.4",
