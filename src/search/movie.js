@@ -211,7 +211,7 @@ const search = (text, selectedFacets, group, sortFieldName, sortDesc, top, skip,
     const query = buildSearchQuery(text, movieFacets, selectedFacets, skip, top);
     if (group) {
         const groupedField = movieFacetsToFieldName[group];
-        return groupedSearch(movieSearchIndex, query, groupedField, groupTop);
+        return groupedSearch(movieSearchIndex, query, groupedField, group, groupTop, movieFacets);
     } else {
         return movieSearchIndex.search(query)
         .then(treatSearchResults(sortFieldName, sortDesc, movieFacets))
