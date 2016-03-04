@@ -20,6 +20,7 @@ const checkIsIndexEmpty = require('./common').checkIsIndexEmpty;
 const promisifySearchIndex = require('./common').promisifySearchIndex;
 const treatSearchResults = require('./common').treatSearchResults;
 const groupedSearch = require('./common').groupedSearch;
+const buildSearchQuery = require('./common').buildSearchQuery;
 
 // Local references
 
@@ -65,6 +66,51 @@ const personBatchOptions = {
     ]
 }
 
+const personFacetsToFieldName = {
+    FCT_PERSON_ACTIVITY: 'activity',
+    FCT_PERSON_NAME: 'fullName',
+    FCT_MOVIE_SEX: 'sex'
+}
+
+const personFacets = {
+    FCT_MOVIE_TITLE: {
+        fieldName: 'title',
+        ranges: [
+            {
+                code: 'R1',
+                value: ['', '9'],
+                label: '#'
+            },
+            {
+                code: 'R2',
+                value: ['A', 'G'],
+                label: 'A-G'
+            },
+            {
+                code: 'R3',
+                value: ['H', 'N'],
+                label: 'H-N'
+            },
+            {
+                code: 'R4',
+                value: ['O', 'T'],
+                label: 'O-T'
+            },
+            {
+                code: 'R5',
+                value: ['U', 'Z'],
+                label: 'U-Z'
+            }
+        ]
+    },
+    FCT_MOVIE_SEX: {
+        fieldName: 'sex'
+    },
+    FCT_PERSON_ACTIVITY: {
+        fieldName: 'activity'
+    }
+}
+
 const BATCH_SIZE = 50;
 
 // Pure functions
@@ -101,26 +147,18 @@ const checkIsPersonIndexEmpty = () => init.then(() => checkIsIndexEmpty(personSe
 const populate = () => init
 .then(() => fillPersonIndex(personSearchIndex, personBatchOptions, BATCH_SIZE))
 
-const search = text => init.then(() => {
-    const query = {
-        query: {'*': [text]},
-        facets: {
-            activity: {},
-            fullName: {
-                ranges: [
-                    ['', '9'],
-                    ['A', 'G'],
-                    ['H', 'N'],
-                    ['O', 'T'],
-                    ['U', 'Z']
-                ]
-            },
-            sex: {}
-        }
+const search = (text, selectedFacets, group, sortFieldName, sortDesc, top, skip, groupTop) => init
+.then(() => {
+    const query = buildSearchQuery(text, personFacets, selectedFacets, skip, top);
+    if (group) {
+        const groupedField = personFacetsToFieldName[group];
+        return groupedSearch(personSearchIndex, query, groupedField, group, groupTop, personFacets);
+    } else {
+        return personSearchIndex.search(query)
+        .then(treatSearchResults(sortFieldName, sortDesc, personFacets))
     }
-    return personSearchIndex.search(query)
-    .then(treatSearchResults);
-});
+})
+.catch(error => console.log(error));
 
 module.exports = {
     init,

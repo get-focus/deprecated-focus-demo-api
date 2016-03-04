@@ -12,16 +12,30 @@ const search = (req, res) => {
         const facets = [{
             FCT_SCOPE: [
                 {
-                    Persons: persons.totalCount
+                    code: 'person',
+                    label: 'Persons',
+                    count: persons.totalCount
                 },
                 {
-                    Movies: movies.totalCount
+                    code: 'movie',
+                    label: 'Movies',
+                    count: movies.totalCount
                 }
             ]
         }];
         const groups = [
-            {Movies: movies.list.slice(0, 10)},
-            {Persons: persons.list.slice(0, 10)}
+            {
+                code: 'movie',
+                label: 'Movies',
+                list: movies.list.slice(0, 10),
+                totalCount: movies.totalCount
+            },
+            {
+                code: 'person',
+                label: 'Persons',
+                list: persons.list.slice(0, 10),
+                totalCount: persons.totalCount
+            }
         ];
         res.json({groups, facets, totalCount});
     });

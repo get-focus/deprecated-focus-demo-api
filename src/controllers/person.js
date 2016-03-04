@@ -11,7 +11,7 @@ const getPerson = (req, res) => {
 }
 
 const savePerson = (req, res) => {
-    database.savePerson(req.body)
+    database.savePerson(req.body.data)
     .then(person => res.json(person))
     .catch(error => {
         console.error(error);
@@ -46,6 +46,7 @@ const search = (req, res) => {
 
 module.exports = {
     getPerson,
+    savePerson,
     isSearchIndexEmpty,
     populateSearchIndex,
     search

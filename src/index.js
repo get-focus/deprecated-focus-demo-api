@@ -10,9 +10,12 @@ const bodyParser = require('body-parser');
 const movieController = require('./controllers/movie');
 const personController = require('./controllers/person');
 const commonController = require('./controllers/common');
+const rankingController = require('./controllers/ranking');
 
 const database = require('./database');
 const searchIndex = require('./search');
+
+const API_PORT = 8080;
 
 const app = express();
 
@@ -32,9 +35,12 @@ app.post('/movies/search', personController.search);
 
 app.post('/common/search', commonController.search);
 
+app.get('/movies/rankings/mark', rankingController.getMarkRanking);
+app.get('/movies/rankings/date', rankingController.getDateRanking);
+
 const launchServer = () => {
-    app.listen(3000, () => {
-        console.log('API listening on port 3000');
+    app.listen(API_PORT, () => {
+        console.log(`API listening on port ${API_PORT}`);
     });
 }
 

@@ -71,11 +71,11 @@ const getMovie = id => new Promise((resolve, reject) => {
 });
 
 const saveMovie = movie => new Promise((resolve, reject) => {
-    db.put(buildMovieKey(movie.code), (error, value) => {
+    db.put(buildMovieKey(movie.code), JSON.stringify(movie), error => {
         if(error) {
             reject(error);
         } else {
-            resolve(movie);
+            resolve();
         }
     });
 });
@@ -93,11 +93,11 @@ const getPerson = id => new Promise((resolve, reject) => {
 });
 
 const savePerson = person => new Promise((resolve, reject) => {
-    db.put(buildPersonKey(person.code), (error, value) => {
+    db.put(buildPersonKey(person.code), JSON.stringify(person), error => {
         if(error) {
             reject(error);
         } else {
-            resolve(person);
+            resolve();
         }
     });
 });
@@ -106,6 +106,7 @@ const getAllMovies = () => new Promise((resolve, reject) => {
     const movies = [];
     db.createReadStream()
     .on('data', data => {
+        if (data.value.substr(0, 1) === '(') console.log(data.value);
         if (isMovieKey(data.key)) movies.push(JSON.parse(data.value))
     })
     .on('end', () => resolve(movies))

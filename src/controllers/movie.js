@@ -12,7 +12,7 @@ const getMovie = (req, res) => {
 }
 
 const saveMovie = (req, res) => {
-    database.saveMovie(req.body)
+    database.saveMovie(req.body.data)
     .then(movie => res.json(movie))
     .catch(error => {
         console.error(error);
@@ -49,6 +49,7 @@ const search = (req, res) => {
 
 module.exports = {
     getMovie,
+    saveMovie,
     isSearchIndexEmpty,
     populateSearchIndex,
     search
