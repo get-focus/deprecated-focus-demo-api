@@ -39,9 +39,13 @@ const search = (req, res) => {
     const skip = req.query.skip;
     const facets = req.body.facets;
     const group = req.body.group;
-    searchIndex.persons.search(criteria, facets, group, sortFieldName, sortDesc, skip)
-    .then(results => res.json(results))
-    .catch(error => res.status(500).json(error));
+    if (criteria === '*') {
+        res.json({list: [], facets: [], totalCount: 0});
+    } else {
+        searchIndex.persons.search(criteria, facets, group, sortFieldName, sortDesc, skip)
+        .then(results => res.json(results))
+        .catch(error => res.status(500).json(error));
+    }
 }
 
 module.exports = {

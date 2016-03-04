@@ -36,7 +36,7 @@ const buildSearchQuery = (text, facets, selectedFacets, top, skip) => {
         }
         return acc;
     }, {});
-    if (selectedFacets) {
+    if (selectedFacets && !_.isEmpty(selectedFacets)) {
         query.filter = _.reduce(selectedFacets, (acc, facetValue, facetKey) => {
             const correspondingFacet = facets[facetKey];
             acc[correspondingFacet.fieldName] = [correspondingFacet.ranges ? correspondingFacet.ranges.filter(range => range.code === facetValue)[0].value : [facetValue, facetValue]];

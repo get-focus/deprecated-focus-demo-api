@@ -27,11 +27,11 @@ app.get('/movies/search-index/is-empty', movieController.isSearchIndexEmpty);
 app.post('/movies/search-index/populate', movieController.populateSearchIndex);
 app.post('/movies/search', movieController.search);
 
-app.get('/people/:id', personController.getPerson);
-app.put('/people/:id', personController.savePerson);
-app.get('/people/search-index/is-empty', personController.isSearchIndexEmpty);
-app.post('/people/search-index/populate', personController.populateSearchIndex);
-app.post('/movies/search', personController.search);
+app.get('/persons/:id', personController.getPerson);
+app.put('/persons/:id', personController.savePerson);
+app.get('/persons/search-index/is-empty', personController.isSearchIndexEmpty);
+app.post('/persons/search-index/populate', personController.populateSearchIndex);
+app.post('/persons/search', personController.search);
 
 app.post('/common/search', commonController.search);
 

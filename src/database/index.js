@@ -106,7 +106,6 @@ const getAllMovies = () => new Promise((resolve, reject) => {
     const movies = [];
     db.createReadStream()
     .on('data', data => {
-        if (data.value.substr(0, 1) === '(') console.log(data.value);
         if (isMovieKey(data.key)) movies.push(JSON.parse(data.value))
     })
     .on('end', () => resolve(movies))

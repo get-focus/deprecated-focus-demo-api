@@ -42,9 +42,13 @@ const search = (req, res) => {
     const groupTop = req.query.groupTop;
     const selectedFacets = req.body.facets;
     const group = req.body.group;
-    searchIndex.movies.search(criteria, selectedFacets, group, sortFieldName, sortDesc, top, skip, groupTop)
-    .then(results => res.json(results))
-    .catch(error => res.status(500).json(error));
+    if (criteria === '*') {
+        res.json({list: [], facets: [], totalCount: 0});
+    } else {
+        searchIndex.movies.search(criteria, selectedFacets, group, sortFieldName, sortDesc, top, skip, groupTop)
+        .then(results => res.json(results))
+        .catch(error => res.status(500).json(error));
+    }
 }
 
 module.exports = {
