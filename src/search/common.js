@@ -57,7 +57,8 @@ const treatSearchResults = (sortFieldName, sortDesc, facetsConfig) => results =>
         const isRangeFacet = !!facetsConfig[facetKey].ranges;
         // Construct the object {FCT_MOVIE_TITLE: [{code: 'R1', label: '#', count: 42}, ...]}
         acc.push({
-            [facetKey]: facet.value.reduce((facetEntriesArray, siFacetValue) => {
+            code: facetKey,
+            entries: facet.value.reduce((facetEntriesArray, siFacetValue) => {
                 if (isRangeFacet) {
                     // Get the range config, ie {code: 'R1', value: ['', '9'], label: '#'}
                     const facetEntryRangeConfig = facetsConfig[facetKey].ranges.filter(range => (range.value[0] === siFacetValue.gte && range.value[1] === siFacetValue.lte))[0];
@@ -102,7 +103,7 @@ const groupedSearch = (si, query, groupFieldName, groupFacetName, groupTop, face
         const groupFacet = facetConfig[groupFacetName];
         const isRangeFacet = !! groupFacet.ranges;
         // Get the group facet entries, ie [{code: 'R1', label: '#', value: 10}]
-        const groupFacetEntries = firstResults.facets.filter(facet => !!facet[groupFacetName])[0][groupFacetName];
+        const groupFacetEntries = firstResults.facets.filter(facet => facet.code === groupFacetName)[0].entries;
         let groupQueries;
         if (isRangeFacet) {
             groupQueries = groupFacetEntries.map(groupFacetEntry => {
