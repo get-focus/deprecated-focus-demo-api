@@ -21,6 +21,7 @@ const promisifySearchIndex = require('./common').promisifySearchIndex;
 const treatSearchResults = require('./common').treatSearchResults;
 const groupedSearch = require('./common').groupedSearch;
 const buildSearchQuery = require('./common').buildSearchQuery;
+const copyFacetsLabelsIntoCodesIfNeeded = require('./common').copyFacetsLabelsIntoCodesIfNeeded;
 
 // Local references
 
@@ -75,7 +76,7 @@ const movieFacetsToFieldName = {
     FCT_MOVIE_YEAR: 'productionYear'
 }
 
-const movieFacets = {
+const movieFacets = copyFacetsLabelsIntoCodesIfNeeded({
     FCT_MOVIE_TITLE: {
         fieldName: 'title',
         ranges: [
@@ -164,7 +165,7 @@ const movieFacets = {
             }
         ]
     }
-}
+});
 
 const BATCH_SIZE = 50;
 

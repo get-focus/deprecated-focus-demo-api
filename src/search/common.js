@@ -5,6 +5,7 @@ const da = require('distribute-array'); // Used to make indexation batches
 const _ = require('lodash');
 
 const DEFAULT_GROUP_TOP = 10;
+const FACET_LABELS_AS_CODES = true;
 
 const initSearchIndex = (searchIndex, options) => searchIndex(options);
 
@@ -47,7 +48,7 @@ const buildSearchQuery = (text, facets, selectedFacets, top, skip) => {
 }
 
 const treatSearchResults = (sortFieldName, sortDesc, facetsConfig) => results => {
-    const facets = !_.isEmpty(results.facets) ? results.facets.reduce((acc, facet) => {
+    let facets = !_.isEmpty(results.facets) ? results.facets.reduce((acc, facet) => {
         // Facet has the shape {key: 'movieType', value: [{key: 'Long-métrage', gte: 'Long-métrage', lte: 'Long-métrage', value: 137, active: true}]}
         // Facet key, such as FCT_MOVIE_TYPE
         const facetKey = _.reduce(facetsConfig, (facetAcc, facetValue, facetKey) => {
@@ -85,6 +86,7 @@ const treatSearchResults = (sortFieldName, sortDesc, facetsConfig) => results =>
         list = _.sortBy(list, sortFieldName);
         if (sortDesc) list = list.reverse();
     }
+    if (FACET_LABELS_AS_CODES) facets = facets.map(facet => ({code: facet.code, entries: facet.entries.map(entry => ({code: entry.label, label: entry.label, value: entry.value}))}));
     return {
         facets,
         totalCount,
@@ -140,6 +142,16 @@ const groupedSearch = (si, query, groupFieldName, groupFacetName, groupTop, face
     })
 }
 
+const copyFacetsLabelsIntoCodesIfNeeded = facetConfig => {
+    if (FACET_LABELS_AS_CODES) return _.reduce(facetConfig, (newConfig, facetValue, facetKey) => {
+        const newValue = {fieldName: facetValue.fieldName};
+        if (facetValue.ranges) newValue.ranges = facetValue.ranges.map(range => ({code: range.label, value: range.value, label: range.label}));
+        newConfig[facetKey] = newValue;
+        return newConfig;
+    }, {});
+    return facetConfig;
+}
+
 module.exports = {
     initSearchIndex,
     promisifySearchIndex,
@@ -149,5 +161,6 @@ module.exports = {
     indexBatch,
     treatSearchResults,
     groupedSearch,
-    buildSearchQuery
+    buildSearchQuery,
+    copyFacetsLabelsIntoCodesIfNeeded
 }
