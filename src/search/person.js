@@ -143,6 +143,15 @@ const init = initSearchIndex(searchIndex, personIndexOptions)
     return Promise.resolve();
 });
 
+const parsePersons = persons => persons.map(person => ({
+    code: person.code,
+    activity: person.activity.join(', '),
+    birthDate: person.birthDate,
+    birthPlace: person.birthPlace,
+    fullName: person.fullName.join(''),
+    sex: person.sex.join('')
+}))
+
 const checkIsPersonIndexEmpty = () => init.then(() => checkIsIndexEmpty(personSearchIndex));
 
 const populate = () => init
@@ -153,10 +162,20 @@ const search = (text, selectedFacets, group, sortFieldName, sortDesc, top, skip,
     const query = buildSearchQuery(text, personFacets, selectedFacets, skip, top);
     if (group) {
         const groupedField = personFacetsToFieldName[group];
-        return groupedSearch(personSearchIndex, query, groupedField, group, groupTop, personFacets);
+        return groupedSearch(personSearchIndex, query, groupedField, group, groupTop, personFacets)
+        .then(results => ({
+            groups: results.groups.map(group => ({code: group.code, label: group.label, totalCount: group.totalCount, list: parsePersons(group.list)})),
+            facets: results.facets,
+            totalCount: results.totalCount
+        }))
     } else {
         return personSearchIndex.search(query)
         .then(treatSearchResults(sortFieldName, sortDesc, personFacets))
+        .then(results => ({
+            list: parsePersons(results.list),
+            facets: results.facets,
+            totalCount: results.totalCount
+        }))
     }
 })
 .catch(error => console.log(error));

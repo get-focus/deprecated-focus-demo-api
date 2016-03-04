@@ -201,6 +201,18 @@ const init = initSearchIndex(searchIndex, movieIndexOptions)
     return Promise.resolve();
 });
 
+const parseMovies = movies => movies.map(movie => ({
+    code: movie.code,
+    keywords: movie.keywords,
+    movieType: movie.movieType.join(''),
+    originalTitle: movie.originalTitle,
+    pressRating: movie.pressRating,
+    productionYear: movie.productionYear.join(''),
+    runtime: movie.runtime,
+    title: movie.title.join(''),
+    userRating: movie.userRating
+}))
+
 const checkIsMovieIndexEmpty = () => init
 .then(() => checkIsIndexEmpty(movieSearchIndex));
 
@@ -212,10 +224,20 @@ const search = (text, selectedFacets, group, sortFieldName, sortDesc, top, skip,
     const query = buildSearchQuery(text, movieFacets, selectedFacets, skip, top);
     if (group) {
         const groupedField = movieFacetsToFieldName[group];
-        return groupedSearch(movieSearchIndex, query, groupedField, group, groupTop, movieFacets);
+        return groupedSearch(movieSearchIndex, query, groupedField, group, groupTop, movieFacets)
+        .then(results => ({
+            groups: results.groups.map(group => ({code: group.code, label: group.label, totalCount: group.totalCount, list: parseMovies(group.list)})),
+            facets: results.facets,
+            totalCount: results.totalCount
+        }))
     } else {
         return movieSearchIndex.search(query)
         .then(treatSearchResults(sortFieldName, sortDesc, movieFacets))
+        .then(results => ({
+            list: parseMovies(results.list),
+            facets: results.facets,
+            totalCount: results.totalCount
+        }))
     }
 })
 .catch(error => console.log(error));
