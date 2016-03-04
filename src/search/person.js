@@ -70,12 +70,12 @@ const personBatchOptions = {
 const personFacetsToFieldName = {
     FCT_PERSON_ACTIVITY: 'activity',
     FCT_PERSON_NAME: 'fullName',
-    FCT_MOVIE_SEX: 'sex'
+    FCT_PERSON_SEX: 'sex'
 }
 
 const personFacets = copyFacetsLabelsIntoCodesIfNeeded({
-    FCT_MOVIE_TITLE: {
-        fieldName: 'title',
+    FCT_PERSON_NAME: {
+        fieldName: 'fullName',
         ranges: [
             {
                 code: 'R1',
@@ -104,7 +104,7 @@ const personFacets = copyFacetsLabelsIntoCodesIfNeeded({
             }
         ]
     },
-    FCT_MOVIE_SEX: {
+    FCT_PERSON_SEX: {
         fieldName: 'sex'
     },
     FCT_PERSON_ACTIVITY: {
