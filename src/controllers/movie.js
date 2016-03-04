@@ -11,6 +11,15 @@ const getMovie = (req, res) => {
     });
 }
 
+const saveMovie = (req, res) => {
+    database.saveMovie(req.body)
+    .then(movie => res.json(movie))
+    .catch(error => {
+        console.error(error);
+        res.status(500).json('Movie not saved.');
+    });
+}
+
 const isSearchIndexEmpty = (req, res) => searchIndex.movies.isEmpty().then(empty => {res.json(empty)});
 
 const populateSearchIndex = (req, res) => {

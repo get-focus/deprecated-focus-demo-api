@@ -19,11 +19,13 @@ const app = express();
 app.use(bodyParser.json());
 
 app.get('/movies/:id', movieController.getMovie);
+app.put('/movies/:id', movieController.saveMovie);
 app.get('/movies/search-index/is-empty', movieController.isSearchIndexEmpty);
 app.post('/movies/search-index/populate', movieController.populateSearchIndex);
 app.post('/movies/search', movieController.search);
 
 app.get('/people/:id', personController.getPerson);
+app.put('/people/:id', personController.savePerson);
 app.get('/people/search-index/is-empty', personController.isSearchIndexEmpty);
 app.post('/people/search-index/populate', personController.populateSearchIndex);
 app.post('/movies/search', personController.search);

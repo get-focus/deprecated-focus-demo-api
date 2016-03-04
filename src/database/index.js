@@ -70,6 +70,16 @@ const getMovie = id => new Promise((resolve, reject) => {
     });
 });
 
+const saveMovie = movie => new Promise((resolve, reject) => {
+    db.put(buildMovieKey(movie.code), (error, value) => {
+        if(error) {
+            reject(error);
+        } else {
+            resolve(movie);
+        }
+    });
+});
+
 const getPerson = id => new Promise((resolve, reject) => {
     db.get(buildPersonKey(id), (error, value) => {
         if (error && error.notFound) {
@@ -78,6 +88,16 @@ const getPerson = id => new Promise((resolve, reject) => {
             reject(error);
         } else {
             resolve(JSON.parse(value));
+        }
+    });
+});
+
+const savePerson = person => new Promise((resolve, reject) => {
+    db.put(buildPersonKey(person.code), (error, value) => {
+        if(error) {
+            reject(error);
+        } else {
+            resolve(person);
         }
     });
 });
@@ -107,7 +127,9 @@ const getAllPersons = () => new Promise((resolve, reject) => {
 module.exports = {
     init,
     getMovie,
+    saveMovie,
     getPerson,
+    savePerson,
     getAllMovies,
     getAllPersons
 }

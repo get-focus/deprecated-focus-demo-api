@@ -10,6 +10,15 @@ const getPerson = (req, res) => {
     });
 }
 
+const savePerson = (req, res) => {
+    database.savePerson(req.body)
+    .then(person => res.json(person))
+    .catch(error => {
+        console.error(error);
+        res.status(500).json('Person not saved.');
+    });
+}
+
 const isSearchIndexEmpty = (req, res) => searchIndex.persons.isEmpty().then(empty => {res.json(empty)});
 
 const populateSearchIndex = (req, res) => {
