@@ -130,12 +130,14 @@ const groupedSearch = (si, query, groupFieldName, groupFacetName, groupTop, face
             return si.search(groupQuery)
             .then(treatSearchResults(null, null, facetConfig))
             .then(groupEntrySearchResult => {
-                result.groups.push({
-                    code: groupQuery.code,
-                    label: groupQuery.label,
-                    list: groupEntrySearchResult.list.slice(0, groupTop || DEFAULT_GROUP_TOP),
-                    totalCount: groupEntrySearchResult.totalCount
-                })
+                if (groupEntrySearchResult.totalCount > 0) {
+                    result.groups.push({
+                        code: groupQuery.code,
+                        label: groupQuery.label,
+                        list: groupEntrySearchResult.list.slice(0, groupTop || DEFAULT_GROUP_TOP),
+                        totalCount: groupEntrySearchResult.totalCount
+                    });
+                }
                 return result;
             })
         }, {groups: [], totalCount, facets});

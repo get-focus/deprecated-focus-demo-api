@@ -34,14 +34,13 @@ const personIndexOptions = {
     fieldsToStore: [
         'code',
         'fullName',
-        'biography',
         'sex',
         'photoURL',
         'birthDate',
         'birthPlace',
-        'activity',
-        'movies'
+        'activity'
     ],
+    fieldedSearch: false,
     deletable: false,
     stopwords
 };
@@ -54,7 +53,8 @@ const personBatchOptions = {
         },
         {
             fieldName: 'activity',
-            filter: true
+            filter: true,
+            searchable: false
         },
         {
             fieldName: 'fullName',
@@ -62,7 +62,8 @@ const personBatchOptions = {
         },
         {
             fieldName: 'sex',
-            filter: true
+            filter: true,
+            searchable: false
         }
     ]
 }
@@ -120,13 +121,11 @@ const getPersons = () => getAllPersons()
 .then(persons => persons.map(person => ({
     code: person.code,
     fullName: [person.fullName],
-    biography: person.biography,
     sex: [person.sex],
     photoUrl: person.photoUrl,
     birthDate: person.birthDate,
     birthPlace: person.birthPlace,
-    activity: person.activity.split(', '),
-    movies: person.movies
+    activity: person.activity.split(', ')
 })));
 
 const fillPersonIndex = (si, batchOptions, batchSize) => initDatabase
@@ -148,6 +147,7 @@ const parsePersons = persons => persons.map(person => ({
     activity: person.activity.join(', '),
     birthDate: person.birthDate,
     birthPlace: person.birthPlace,
+    photoUrl: person.photoUrl,
     fullName: person.fullName.join(''),
     sex: person.sex.join('')
 }))
@@ -158,6 +158,10 @@ const populate = () => init
 .then(() => fillPersonIndex(personSearchIndex, personBatchOptions, BATCH_SIZE))
 
 const search = (text, selectedFacets, group, sortFieldName, sortDesc, top, skip, groupTop) => init
+.then(() => personSearchIndex.tellMeAboutMySearchIndex())
+.then(infos => {
+    if (infos.totalDocs === 0) throw new Error('Person search index is empty');
+})
 .then(() => {
     const query = buildSearchQuery(text, personFacets, selectedFacets, skip, top);
     if (group) {
@@ -178,11 +182,16 @@ const search = (text, selectedFacets, group, sortFieldName, sortDesc, top, skip,
         }))
     }
 })
-.catch(error => console.log(error));
+
+const flush = () => personSearchIndex.flush();
+
+const info = () => personSearchIndex.tellMeAboutMySearchIndex();
 
 module.exports = {
     init,
     search,
     checkIsIndexEmpty: checkIsPersonIndexEmpty,
-    populate
+    populate,
+    flush,
+    info
 }

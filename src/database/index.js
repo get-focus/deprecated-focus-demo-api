@@ -55,18 +55,21 @@ const init = Promise.all([
 
 const getMovie = id => new Promise((resolve, reject) => {
     db.get(buildMovieKey(id), (error, value) => {
-        if (error) reject(error);
-        const movie = JSON.parse(value);
-        Promise.reduce(['actors', 'producers', 'directors', 'camera', 'writers'], (acc, role) => {
-            if (movie[role]) {
-                return Promise.mapSeries(movie[role], person => getPerson(person.code)
-                .then(completePerson => _.assign(person, completePerson)))
-                .then(completeRole => _.assign(acc, {[role]: completeRole}))
-            } else {
-                return acc;
-            }
-        }, movie)
-        .then(result => resolve(result));
+        if (error) {
+            reject(error);
+        } else {
+            const movie = JSON.parse(value);
+            Promise.reduce(['actors', 'producers', 'directors', 'camera', 'writers'], (acc, role) => {
+                if (movie[role]) {
+                    return Promise.mapSeries(movie[role], person => getPerson(person.code)
+                    .then(completePerson => _.assign(person, completePerson)))
+                    .then(completeRole => _.assign(acc, {[role]: completeRole}))
+                } else {
+                    return acc;
+                }
+            }, movie)
+            .then(result => resolve(result));
+        }
     });
 });
 
@@ -82,9 +85,7 @@ const saveMovie = movie => new Promise((resolve, reject) => {
 
 const getPerson = id => new Promise((resolve, reject) => {
     db.get(buildPersonKey(id), (error, value) => {
-        if (error && error.notFound) {
-            resolve();
-        } else if(error) {
+        if(error) {
             reject(error);
         } else {
             resolve(JSON.parse(value));

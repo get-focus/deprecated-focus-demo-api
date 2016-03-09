@@ -35,8 +35,6 @@ const movieIndexOptions = {
         'code',
         'title',
         'originalTitle',
-        'synopsis',
-        'shortSynopsis',
         'keywords',
         'poster',
         'runtime',
@@ -45,6 +43,7 @@ const movieIndexOptions = {
         'userRating',
         'pressRating'
     ],
+    fieldedSearch: false,
     deletable: false,
     stopwords
 };
@@ -61,11 +60,13 @@ const movieBatchOptions = {
         },
         {
             fieldName: 'movieType',
-            filter: true
+            filter: true,
+            searchable: false
         },
         {
             fieldName: 'productionYear',
-            filter: true
+            filter: true,
+            searchable: false
         }
     ]
 };
@@ -176,8 +177,6 @@ const getMovies = () => getAllMovies()
     code: movie.code,
     title: [movie.title],
     originalTitle: movie.originalTitle,
-    synopsis: movie.synopsis,
-    shortSynopsis: movie.shortSynopsis,
     keywords: movie.keywords,
     poster: movie.poster,
     runtime: movie.runtime,
@@ -220,6 +219,10 @@ const populate = () => init
 .then(() => fillMovieIndex(movieSearchIndex, movieBatchOptions, BATCH_SIZE))
 
 const search = (text, selectedFacets, group, sortFieldName, sortDesc, top, skip, groupTop) => init
+.then(() => movieSearchIndex.tellMeAboutMySearchIndex())
+.then(infos => {
+    if (infos.totalDocs === 0) throw new Error('Movie search index is empty');
+})
 .then(() => {
     const query = buildSearchQuery(text, movieFacets, selectedFacets, skip, top);
     if (group) {
@@ -240,11 +243,16 @@ const search = (text, selectedFacets, group, sortFieldName, sortDesc, top, skip,
         }))
     }
 })
-.catch(error => console.log(error));
+
+const flush = () => movieSearchIndex.flush();
+
+const info = () => movieSearchIndex.tellMeAboutMySearchIndex();
 
 module.exports = {
     init,
     search,
     checkIsIndexEmpty: checkIsMovieIndexEmpty,
-    populate
+    populate,
+    flush,
+    info
 }
