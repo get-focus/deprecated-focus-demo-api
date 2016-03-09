@@ -4,6 +4,7 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const startCommandLine = require('./command-line').start;
 
 // Local imports
 
@@ -42,6 +43,7 @@ const launchServer = () => {
     app.listen(API_PORT, () => {
         console.log(`API listening on port ${API_PORT}`);
     });
+    startCommandLine();
 }
 
 Promise.all([database.init, searchIndex.init])

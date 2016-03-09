@@ -15,12 +15,16 @@ module.exports = {
     movies: {
         populate: movieSearch.populate,
         isEmpty: movieSearch.checkIsIndexEmpty,
-        search: movieSearch.search
+        search: movieSearch.search,
+        flush: movieSearch.flush,
+        info: movieSearch.info
     },
     persons: {
         populate: personSearch.populate,
         isEmpty: personSearch.checkIsIndexEmpty,
-        search: personSearch.search
+        search: personSearch.search,
+        flush: personSearch.flush,
+        info: personSearch.info
     },
     init
 };
