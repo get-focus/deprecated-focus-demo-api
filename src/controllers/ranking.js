@@ -11,7 +11,7 @@ const getRanking = (req, res, fieldName) => {
 }
 
 const getMarkRanking = (req, res) => {
-    getRanking(req, res, 'userRanking');
+    getRanking(req, res, 'userRating');
 }
 
 const getDateRanking = (req, res) => {
