@@ -46,7 +46,7 @@ const launchServer = () => {
     startCommandLine();
 }
 
-Promise.all([database.init, searchIndex.init])
+searchIndex.init
 .then(launchServer);
 
 console.log('Initializing the API...');
