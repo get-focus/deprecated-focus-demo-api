@@ -12,6 +12,7 @@ const movieController = require('./controllers/movie');
 const personController = require('./controllers/person');
 const commonController = require('./controllers/common');
 const rankingController = require('./controllers/ranking');
+const adminController = require('./controllers/admin');
 
 const database = require('./database');
 const searchIndex = require('./search');
@@ -38,6 +39,10 @@ app.post('/common/search', commonController.search);
 
 app.get('/movies/rankings/mark', rankingController.getMarkRanking);
 app.get('/movies/rankings/date', rankingController.getDateRanking);
+
+app.post('/admin/search/info', adminController.getSearchInfo);
+app.post('/admin/search/flush', adminController.flushSearchIndex);
+app.post('/admin/search/populate', adminController.populateSearchIndex);
 
 const launchServer = () => {
     app.listen(API_PORT, () => {

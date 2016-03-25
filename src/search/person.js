@@ -10,7 +10,6 @@ const _ = require('lodash');
 
 // Local imports
 
-const initDatabase = require('../database').init;
 const getAllPersons = require('../database').getAllPersons;
 const batchify = require('./common').batchify;
 const sequencify = require('./common').sequencify;
@@ -128,8 +127,7 @@ const getPersons = () => getAllPersons()
     activity: person.activity.split(', ')
 })));
 
-const fillPersonIndex = (si, batchOptions, batchSize) => initDatabase
-.then(() => getPersons())
+const fillPersonIndex = (si, batchOptions, batchSize) => getPersons()
 .then(persons => batchify(persons, batchSize))
 .then(batches => sequencify(batches, (batch, batchIndex) => indexBatch(si, batch, batchOptions, batchIndex, batches.length)))
 

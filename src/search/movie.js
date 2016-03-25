@@ -10,7 +10,6 @@ const _ = require('lodash');
 
 // Local imports
 
-const initDatabase = require('../database').init;
 const getAllMovies = require('../database').getAllMovies;
 const batchify = require('./common').batchify;
 const sequencify = require('./common').sequencify;
@@ -186,8 +185,7 @@ const getMovies = () => getAllMovies()
     pressRating: movie.pressRating
 })));
 
-const fillMovieIndex = (si, batchOptions, batchSize) => initDatabase
-.then(() => getMovies())
+const fillMovieIndex = (si, batchOptions, batchSize) => getMovies()
 .then(movies => batchify(movies, batchSize))
 .then(batches => sequencify(batches, (batch, batchIndex) => indexBatch(si, batch, batchOptions, batchIndex, batches.length)))
 
