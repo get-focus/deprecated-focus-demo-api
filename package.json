@@ -4,7 +4,6 @@
   "description": "Focus Demo Node API",
   "main": "index.js",
   "scripts": {
-    "postinstall": "mkdir storage",
     "start": "node src"
   },
   "repository": {
