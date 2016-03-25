@@ -16,7 +16,7 @@ const rankingController = require('./controllers/ranking');
 const database = require('./database');
 const searchIndex = require('./search');
 
-const API_PORT = 8080;
+const API_PORT = process.env.PORT || 8080;
 
 const app = express();
 

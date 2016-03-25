@@ -1,0 +1,8 @@
+{
+  "name": "Focus demo API",
+  "description": "A Node.js demonstration API",
+  "repository": "https://github.com/get-focus/focus-demo-api",
+  "logo": "http://node-js-sample.herokuapp.com/node.svg",
+  "keywords": ["node", "express", "static", "focus"],
+  "image": "heroku/nodejs"
+}
