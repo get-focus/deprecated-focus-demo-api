@@ -51,8 +51,8 @@ const launchServer = () => {
         console.log(`API listening on port ${API_PORT}`);
     });
     startCommandLine();
-    searchIndex.movies.replicate();
-    searchIndex.persons.replicate();
+    searchIndex.movies.populate();
+    searchIndex.persons.populate();
 }
 
 searchIndex.init
