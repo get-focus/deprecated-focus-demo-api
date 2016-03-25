@@ -53,8 +53,11 @@ const launchServer = () => {
         console.log(`API listening on port ${API_PORT}`);
     });
     startCommandLine();
-    searchIndex.movies.populate();
-    searchIndex.persons.populate();
+    // Look if we are running on Heroku, if yes, start to build the search index right away !
+    if (process.env.DYNO) {
+        searchIndex.movies.populate();
+        searchIndex.persons.populate();
+    }
 }
 
 searchIndex.init
