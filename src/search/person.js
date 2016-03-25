@@ -7,6 +7,7 @@ const searchIndex = Promise.promisify(require('search-index')); // Promisify sea
 const stopwords = require('term-vector').getStopwords('fr').sort(); // Get the french stopwords
 const da = require('distribute-array'); // Used to make indexation batches
 const _ = require('lodash');
+const fs = require('fs');
 
 // Local imports
 
@@ -140,6 +141,20 @@ const init = initSearchIndex(searchIndex, personIndexOptions)
     return Promise.resolve();
 });
 
+const snapShot = () => new Promise((resolve, reject) => {
+    personSearchIndex.snapShot(readStream => {
+        readStream.pipe(fs.createWriteStream('storage/person-backup.gz'))
+        .on('close', resolve);
+    });
+});
+
+const replicate = () => new Promise((resolve, reject) => {
+    personSearchIndex.flush(err => {
+        if (err) reject(err);
+        personSearchIndex.replicate(fs.createReadStream('storage/person-backup.gz'), resolve);
+    });
+});
+
 const parsePersons = persons => persons.map(person => ({
     code: person.code,
     activity: person.activity.join(', '),
@@ -191,5 +206,7 @@ module.exports = {
     checkIsIndexEmpty: checkIsPersonIndexEmpty,
     populate,
     flush,
-    info
+    info,
+    snapShot,
+    replicate
 }

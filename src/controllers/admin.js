@@ -29,12 +29,26 @@ const flushSearchIndex = (req, res) => {
 
 const populateSearchIndex = (req, res) => {
     searchIndex.movies.populate()
-    .then(() => searchIndex.persons.populate())
-    res.send('Populating search index');
+    .then(() => searchIndex.persons.populate());
+    res.send('Populating search index...');
+}
+
+const snapShotSearchIndex = (req, res) => {
+    searchIndex.movies.snapShot()
+    .then(() => searchIndex.persons.snapShot())
+    .then(() => {res.send('Search index snapshot');})
+}
+
+const replicateSearchIndex = (req, res) => {
+    searchIndex.movies.replicate()
+    .then(() => searchIndex.persons.replicate())
+    .then(() => {res.send('Search index replicated');})
 }
 
 module.exports = {
     getSearchInfo,
     flushSearchIndex,
-    populateSearchIndex
+    populateSearchIndex,
+    snapShotSearchIndex,
+    replicateSearchIndex
 }

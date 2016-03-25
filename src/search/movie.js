@@ -7,6 +7,7 @@ const searchIndex = Promise.promisify(require('search-index')); // Promisify sea
 const stopwords = require('term-vector').getStopwords('fr').sort(); // Get the french stopwords
 const da = require('distribute-array'); // Used to make indexation batches
 const _ = require('lodash');
+const fs = require('fs');
 
 // Local imports
 
@@ -198,6 +199,20 @@ const init = initSearchIndex(searchIndex, movieIndexOptions)
     return Promise.resolve();
 });
 
+const snapShot = () => new Promise((resolve, reject) => {
+    movieSearchIndex.snapShot(readStream => {
+        readStream.pipe(fs.createWriteStream('storage/movie-backup.gz'))
+        .on('close', resolve);
+    });
+});
+
+const replicate = () => new Promise((resolve, reject) => {
+    movieSearchIndex.flush(err => {
+        if (err) reject(err);
+        movieSearchIndex.replicate(fs.createReadStream('storage/movie-backup.gz'), resolve);
+    });
+});
+
 const parseMovies = movies => movies.map(movie => ({
     code: movie.code,
     keywords: movie.keywords,
@@ -252,5 +267,7 @@ module.exports = {
     checkIsIndexEmpty: checkIsMovieIndexEmpty,
     populate,
     flush,
-    info
+    info,
+    snapShot,
+    replicate
 }

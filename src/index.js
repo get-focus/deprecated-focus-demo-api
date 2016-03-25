@@ -43,12 +43,16 @@ app.get('/movies/rankings/date', rankingController.getDateRanking);
 app.post('/admin/search/info', adminController.getSearchInfo);
 app.post('/admin/search/flush', adminController.flushSearchIndex);
 app.post('/admin/search/populate', adminController.populateSearchIndex);
+app.post('/admin/search/snapshot', adminController.snapShotSearchIndex);
+app.post('/admin/search/replicate', adminController.replicateSearchIndex);
 
 const launchServer = () => {
     app.listen(API_PORT, () => {
         console.log(`API listening on port ${API_PORT}`);
     });
     startCommandLine();
+    searchIndex.movies.replicate();
+    searchIndex.persons.replicate();
 }
 
 searchIndex.init
