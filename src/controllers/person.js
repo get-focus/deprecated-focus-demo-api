@@ -11,7 +11,7 @@ const getPerson = (req, res) => {
 }
 
 const savePerson = (req, res) => {
-    database.savePerson(req.body.data)
+    database.savePerson(req.body)
     .then(person => res.json(person))
     .catch(error => {
         console.error(error);

@@ -12,7 +12,7 @@ const getMovie = (req, res) => {
 }
 
 const saveMovie = (req, res) => {
-    database.saveMovie(req.body.data)
+    database.saveMovie(req.body)
     .then(movie => res.json(movie))
     .catch(error => {
         console.error(error);
