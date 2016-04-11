@@ -46,7 +46,7 @@ const getPerson = code => new Promise((resolve, reject) => {
         person.movies.map(movieId => {
             const movie = _.find(movies, movie => movie.code == movieId);
             if(movie) {
-                movieLinks.push(movie);
+                movieLinks.push(_.omit(movie, ['actors', 'camera', 'directors', 'producers', 'writers']));
             }
         });
         person.movieLinks = movieLinks;
