@@ -17,7 +17,7 @@ const getMovie = code => new Promise((resolve, reject) => {
     if (!movie) reject();
     Promise.reduce(['actors', 'producers', 'directors', 'camera', 'writers'], (acc, role) => {
         if (movie[role]) {
-            return Promise.mapSeries(movie[role], person => getPerson(person.code)
+            return Promise.mapSeries(movie[role], person => getPersonWithoutMoviesInfo(person.code)
             .then(completePerson => _.assign(person, completePerson)))
             .then(completeRole => _.assign(acc, {[role]: completeRole}))
         } else {
@@ -37,7 +37,23 @@ const saveMovie = movie => new Promise((resolve, reject) => {
     }
 });
 
-const getPerson = code => Promise.resolve(_.find(persons, person => person.code == code));
+const getPersonWithoutMoviesInfo = code => Promise.resolve(_.find(persons, person => person.code == code));
+
+const getPerson = code => new Promise((resolve, reject) => {
+    const person = _.find(persons, person => person.code == code);
+    if(person && person.movies) {
+        const movieLinks = [];
+        person.movies.map(movieId => {
+            const movie = _.find(movies, movie => movie.code == movieId);
+            if(movie) {
+                movieLinks.push(movie);
+            }
+        });
+        person.movieLinks = movieLinks;
+    }
+
+    resolve(person);
+});
 
 const savePerson = person => new Promise((resolve, reject) => {
     const index = _.findIndex(persons, candidate => candidate.code == person.code);
