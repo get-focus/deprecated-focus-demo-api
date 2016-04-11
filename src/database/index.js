@@ -51,7 +51,6 @@ const getPerson = code => new Promise((resolve, reject) => {
         });
         person.movieLinks = movieLinks;
     }
-
     resolve(person);
 });
 
